@@ -2,7 +2,7 @@ package me.nfekete.adventofcode.y2021.day01
 
 import me.nfekete.adventofcode.y2021.common.classpathFile
 
-fun main() {
+private fun main() {
     val depths = classpathFile("day01/input.txt").readLines().map { it.toInt() }
     depths
         .windowed(2, 1, false)

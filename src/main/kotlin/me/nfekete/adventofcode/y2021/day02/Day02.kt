@@ -2,15 +2,15 @@ package me.nfekete.adventofcode.y2021.day02
 
 import me.nfekete.adventofcode.y2021.common.classpathFile
 
-sealed class Instruction {
+private sealed class Instruction {
     companion object
     class Forward(val value: Int) : Instruction()
     class Down(val value: Int) : Instruction()
     class Up(val value: Int) : Instruction()
 }
 
-val regex = Regex("([^ ]+) (\\d+)")
-fun Instruction.Companion.parse(instruction: String) =
+private val regex = Regex("([^ ]+) (\\d+)")
+private fun Instruction.Companion.parse(instruction: String) =
     regex.matchEntire(instruction)!!.destructured.let { (command, param) ->
         when (command) {
             "forward" -> Instruction.Forward(param.toInt())
@@ -20,14 +20,14 @@ fun Instruction.Companion.parse(instruction: String) =
         }
     }
 
-interface Interpreter<S> {
+private interface Interpreter<S> {
     val initialState: S
     fun interpret(state: S, instruction: Instruction): S
     fun run(instructions: Iterable<Instruction>) =
         instructions.fold(initialState, this::interpret)
 }
 
-class Part1 : Interpreter<Part1.Position> {
+private class Part1 : Interpreter<Part1.Position> {
     data class Position(val horizontal: Int = 0, val depth: Int = 0)
     override val initialState: Position get() = Position()
     override fun interpret(state: Position, instruction: Instruction) =
@@ -38,7 +38,7 @@ class Part1 : Interpreter<Part1.Position> {
         }
 }
 
-class Part2 : Interpreter<Part2.Position> {
+private class Part2 : Interpreter<Part2.Position> {
     data class Position(val horizontal: Int = 0, val depth: Int = 0, val aim: Int = 0)
     override val initialState: Position get() = Position()
     override fun interpret(state: Position, instruction: Instruction): Position {
@@ -53,7 +53,7 @@ class Part2 : Interpreter<Part2.Position> {
     }
 }
 
-fun main() {
+private fun main() {
     val instructions = classpathFile("day02/input.txt")
         .readLines()
         .map { Instruction.parse(it) }
