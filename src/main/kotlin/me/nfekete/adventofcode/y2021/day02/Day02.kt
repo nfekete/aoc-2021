@@ -4,9 +4,9 @@ import me.nfekete.adventofcode.y2021.common.classpathFile
 
 sealed class Instruction {
     companion object
-    class Forward(val distance: Int) : Instruction()
-    class Down(val distance: Int) : Instruction()
-    class Up(val distance: Int) : Instruction()
+    class Forward(val value: Int) : Instruction()
+    class Down(val value: Int) : Instruction()
+    class Up(val value: Int) : Instruction()
 }
 
 val regex = Regex("([^ ]+) (\\d+)")
@@ -21,24 +21,43 @@ fun Instruction.Companion.parse(instruction: String) =
     }
 
 interface Interpreter<S> {
+    val initialState: S
     fun interpret(state: S, instruction: Instruction): S
+    fun run(instructions: Iterable<Instruction>) =
+        instructions.fold(initialState, this::interpret)
 }
 
-data class SubmarinePosition(val horizontal: Int = 0, val depth: Int = 0)
-class Part1 : Interpreter<SubmarinePosition> {
-    override fun interpret(state: SubmarinePosition, instruction: Instruction) =
+class Part1 : Interpreter<Part1.Position> {
+    data class Position(val horizontal: Int = 0, val depth: Int = 0)
+    override val initialState: Position get() = Position()
+    override fun interpret(state: Position, instruction: Instruction) =
         when (instruction) {
-            is Instruction.Forward -> state.copy(horizontal = state.horizontal + instruction.distance)
-            is Instruction.Down -> state.copy(depth = state.depth + instruction.distance)
-            is Instruction.Up -> state.copy(depth = state.depth - instruction.distance)
+            is Instruction.Forward -> state.copy(horizontal = state.horizontal + instruction.value)
+            is Instruction.Down -> state.copy(depth = state.depth + instruction.value)
+            is Instruction.Up -> state.copy(depth = state.depth - instruction.value)
         }
 }
 
+class Part2 : Interpreter<Part2.Position> {
+    data class Position(val horizontal: Int = 0, val depth: Int = 0, val aim: Int = 0)
+    override val initialState: Position get() = Position()
+    override fun interpret(state: Position, instruction: Instruction): Position {
+        return when (instruction) {
+            is Instruction.Down -> state.copy(aim = state.aim + instruction.value)
+            is Instruction.Up -> state.copy(aim = state.aim - instruction.value)
+            is Instruction.Forward -> state.copy(
+                horizontal = state.horizontal + instruction.value,
+                depth = state.depth + instruction.value * state.aim
+            )
+        }
+    }
+}
+
 fun main() {
-    val part1 = Part1()
-    classpathFile("day02/input.txt")
+    val instructions = classpathFile("day02/input.txt")
         .readLines()
         .map { Instruction.parse(it) }
-        .fold(SubmarinePosition(), part1::interpret)
-        .let { println("Part1 result: $it -> ${it.depth * it.horizontal}") }
+
+    Part1().run(instructions).let { println("Part1 result: $it -> ${it.depth * it.horizontal}") }
+    Part2().run(instructions).let { println("Part2 result: $it -> ${it.depth * it.horizontal}") }
 }
