@@ -12,10 +12,15 @@ private fun List<String>.toCard() = map { line ->
         .map { it.toInt() }
 }
 
+private fun Iterator<List<String>>.toCards() = sequence {
+    while (hasNext())
+        yield(next().toCard())
+}.toList()
+
 private fun Card.findBingoRow(lastDrawn: Int, drawn: Set<Int>): Int? {
-    val hasBingo = any { row -> row.all { it in drawn } }
-    return if (hasBingo)
-        lastDrawn * sumOf { it.filter { number -> number !in drawn }.sum() }
+    val bingo = any { row -> row.all { it in drawn } }
+    return if (bingo)
+        lastDrawn * sumOf { row -> row.filter { number -> number !in drawn }.sum() }
     else
         null
 }
@@ -24,25 +29,21 @@ private fun Card.findBingo(lastDrawn: Int, drawn: Set<Int>) =
     findBingoRow(lastDrawn, drawn)
         ?: transpose().findBingoRow(lastDrawn, drawn)
 
-private fun Iterator<List<String>>.toCards() = sequence {
-    while (hasNext())
-        yield(next().toCard())
-}.toList()
-
 private data class BingoGame(val numbers: List<Int>, val cards: List<Card>)
 
-private fun BingoGame.play(): Int {
-    var set = mutableSetOf<Int>()
+private fun BingoGame.play() = sequence {
+    var drawn = mutableSetOf<Int>()
+    var cards = cards.toMutableList()
     numbers.forEach { number ->
-        set.add(number)
-        val bingo = cards.firstNotNullOfOrNull { card ->
-            card.findBingo(number, set)
-        }
-        if (bingo != null) {
-            return bingo
-        }
+        drawn.add(number)
+        cards
+            .mapNotNull { card -> card.findBingo(number, drawn)?.let { card to it } }
+            .toList()
+            .forEach { (card, score) ->
+                cards.remove(card)
+                yield(score)
+            }
     }
-    error("invalid input")
 }
 
 private fun main() {
@@ -50,5 +51,7 @@ private fun main() {
     val numbers = it.next().single().split(",").map { it.toInt() }
     val cards = it.toCards()
 
-    BingoGame(numbers, cards).play().let { score -> println("Bingo! Score = $score") }
+    val gamePlay = BingoGame(numbers, cards).play().toList()
+    gamePlay.first().let { score -> println("Bingo! Part1 score = $score") }
+    gamePlay.last().let { score -> println("Bingo! Part2 score = $score") }
 }
