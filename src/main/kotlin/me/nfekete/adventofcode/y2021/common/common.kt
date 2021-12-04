@@ -60,3 +60,5 @@ fun <A, B, C, R> crossProduct(sa: Sequence<A>, sb: Sequence<B>, sc: Sequence<C>,
 fun <A, B, C, D, R> crossProduct(
     sa: Sequence<A>, sb: Sequence<B>, sc: Sequence<C>, sd: Sequence<D>, fn: (A, B, C, D) -> R
 ) = sa.flatMap { a -> sb.flatMap { b -> sc.flatMap { c -> sd.map { d -> fn(a, b, c, d) } } } }
+
+fun <T> List<List<T>>.transpose() = first().indices.map { columnIndex -> map { row -> row[columnIndex] } }
