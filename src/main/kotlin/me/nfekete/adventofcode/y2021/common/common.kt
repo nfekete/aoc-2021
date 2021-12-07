@@ -3,10 +3,10 @@ package me.nfekete.adventofcode.y2021.common
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-inline fun classpathFile(path: String) =
+fun classpathFile(path: String) =
     BufferedReader(
         InputStreamReader(
-            Thread.currentThread().contextClassLoader.getResourceAsStream(path)
+            Thread.currentThread().contextClassLoader.getResourceAsStream(path)!!
         )
     )
 
@@ -62,3 +62,24 @@ fun <A, B, C, D, R> crossProduct(
 ) = sa.flatMap { a -> sb.flatMap { b -> sc.flatMap { c -> sd.map { d -> fn(a, b, c, d) } } } }
 
 fun <T> List<List<T>>.transpose() = first().indices.map { columnIndex -> map { row -> row[columnIndex] } }
+
+fun <P, R> ((P) -> R).memoized(cache: MutableMap<P, R> = mutableMapOf()): (P) -> R =
+    fun(p: P) =
+        if (p in cache) {
+            cache[p]!!
+        } else {
+            val r = this(p)
+            cache[p] = r
+            r
+        }
+
+fun <P1, P2, R> ((P1, P2) -> R).memoized(cache: MutableMap<Pair<P1, P2>, R> = mutableMapOf()): (P1, P2) -> R =
+    fun(p1: P1, p2: P2) = (p1 to p2).let {
+        if (it in cache) {
+            cache[it]!!
+        } else {
+            val r = this(it.first, it.second)
+            cache[it] = r
+            r
+        }
+    }
