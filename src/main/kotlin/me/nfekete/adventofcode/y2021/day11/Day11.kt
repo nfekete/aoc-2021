@@ -37,6 +37,8 @@ private fun Grid.zeroOut(coords: Set<Coord>) =
     mapIndices { coord ->
         if (coord in coords) 0 else this[coord]
     }
+private fun Grid.elements() = flatMap { row -> row.map { it } }
+private fun Grid.allTheSame() = elements().run { !all { it == first() } }
 
 private fun Grid.part1() = generateSequence(this to emptySet<Coord>()) { (startingGrid, _) ->
     var grid = startingGrid.map { row -> row.map { element -> element + 1 } }
@@ -64,6 +66,11 @@ private fun main() {
         .take(101)
         .sumOf { it.second.size }
         .let { println("Part1: $it") }
+
+    input.part1()
+        .takeWhile { (grid, _) -> grid.allTheSame() }
+        .count()
+        .let { println("Part2: $it") }
 
 }
 
