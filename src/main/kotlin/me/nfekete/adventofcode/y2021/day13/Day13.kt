@@ -10,13 +10,14 @@ private sealed class Fold {
 }
 
 private val foldRegex = Regex("^fold along ([xy])=(\\d+)$")
-private fun Fold(s: String) = foldRegex.matchEntire(s)!!.destructured.let { (axis, value) ->
-    when (axis) {
-        "x" -> Fold.X(value.toInt())
-        "y" -> Fold.Y(value.toInt())
-        else -> error("Unknown axis '$axis'")
+private fun Fold(s: String) =
+    foldRegex.matchEntire(s)!!.destructured.let { (axis, value) ->
+        when (axis) {
+            "x" -> Fold.X(value.toInt())
+            "y" -> Fold.Y(value.toInt())
+            else -> error("Unknown axis '$axis'")
+        }
     }
-}
 
 private fun List<Coord>.foldAt(fold: Fold) = map { coord ->
     when (fold) {
@@ -27,6 +28,17 @@ private fun List<Coord>.foldAt(fold: Fold) = map { coord ->
         is Fold.Y -> when {
             coord.y < fold.y -> coord
             else -> coord.copy(y = 2 * fold.y - coord.y)
+        }
+    }
+}
+
+private fun List<Coord>.pretty() = toSet().run {
+    (0..maxOf { it.y }).joinToString("\n") { y ->
+        (0..maxOf { it.x }).joinToString("") { x ->
+            when (Coord(x, y)) {
+                in this -> "#"
+                else -> " "
+            }
         }
     }
 }
@@ -46,4 +58,8 @@ private fun main() {
         .toSet()
         .count()
         .let { println("Part1: $it") }
+
+    folds.fold(coords) { acc, fold -> acc.foldAt(fold) }
+        .run { pretty() }
+        .let { println("Part2:\n$it") }
 }
