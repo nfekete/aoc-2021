@@ -37,6 +37,7 @@ fun String.splitByDelimiter(delimiter: String) =
 
 fun <A, B, C> Pair<A, B>.map1(fn: (A) -> C): Pair<C, B> = let { (a, b) -> fn(a) to b }
 fun <A, B, C> Pair<A, B>.map2(fn: (B) -> C): Pair<A, C> = let { (a, b) -> a to fn(b) }
+fun <A, B, R> Pair<A, B>.map(fn: (A, B) -> R): R = let { (a, b) -> fn(a,b) }
 val <A, B> Pair<A, B>.swapped get() = second to first
 
 fun Iterable<Long>.product() = fold(1L) { acc, i -> acc * i }
