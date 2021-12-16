@@ -84,3 +84,9 @@ fun <P1, P2, R> ((P1, P2) -> R).memoized(cache: MutableMap<Pair<P1, P2>, R> = mu
             r
         }
     }
+
+fun <R> produceIf(test: Boolean, producer: () -> R): R? =
+    when {
+        test -> producer()
+        else -> null
+    }
