@@ -17,6 +17,7 @@ private sealed interface Packet {
 
     val version: Int
     val size: Int
+    val value: BigInteger
 
     data class LiteralValue(
         override val version: Int,
@@ -24,18 +25,60 @@ private sealed interface Packet {
     ) : Packet {
         override val size: Int
             get() = 6 + 5 * ((digits.size - 1) / 4 + 1)
-
-        val bigInteger = digits.fold(BigInteger.ZERO) { acc, bit -> acc.shl(1) + bit.toBigInteger()}
+        override val value = digits.fold(BigInteger.ZERO) { acc, bit -> acc.shl(1) + bit.toBigInteger() }
     }
 
     data class Operator(
         override val version: Int,
+        val operatorLengthType: OperatorLengthType,
+        val operatorType: OperatorType,
         val packets: List<Packet>,
     ) : Packet {
         override val size: Int
-            get() = 6 + 1 + packets.sumOf { it.size }
+            get() = 6 + 1 + operatorLengthType.requiredBits + packets.sumOf { it.size }
+        override val value: BigInteger
+            get() = operatorType.apply(packets)
     }
 }
+
+private enum class OperatorLengthType(val requiredBits: Int) {
+    BITS(15), PACKETS(11)
+}
+
+private enum class OperatorType {
+    Sum,
+    Product,
+    Minimum,
+    Maximum,
+    GreaterThan,
+    LessThan,
+    EqualTo,
+    ;
+
+    companion object {
+        fun of(typeId: Int) = when (typeId) {
+            0 -> Sum
+            1 -> Product
+            2 -> Minimum
+            3 -> Maximum
+            5 -> GreaterThan
+            6 -> LessThan
+            7 -> EqualTo
+            else -> error("Unknown operator type '$typeId'")
+        }
+    }
+}
+
+private fun OperatorType.apply(operands: List<Packet>) = when (this) {
+    OperatorType.Sum -> operands.sumOf { it.value }
+    OperatorType.Product -> operands.fold(BigInteger.ONE) { acc, current -> acc * current.value }
+    OperatorType.Minimum -> operands.minOf { it.value }
+    OperatorType.Maximum -> operands.maxOf { it.value }
+    OperatorType.GreaterThan -> if (operands[0].value > operands[1].value) BigInteger.ONE else BigInteger.ZERO
+    OperatorType.LessThan -> if (operands[0].value < operands[1].value) BigInteger.ONE else BigInteger.ZERO
+    OperatorType.EqualTo -> if (operands[0].value == operands[1].value) BigInteger.ONE else BigInteger.ZERO
+}!!
+
 
 private fun Iterator<Bit>.take(bits: Int) =
     asSequence().take(bits).toList().let {
@@ -83,14 +126,14 @@ private fun readPacket(bits: Iterator<Bit>): Packet {
                         subPackets.add(packet)
                         totalSize += packet.size
                     }
-                    Packet.Operator(version, subPackets.toList())
+                    Packet.Operator(version, OperatorLengthType.BITS, OperatorType.of(typeId), subPackets.toList())
                 }
                 else -> {
                     val numberOfSubpackets = bits.take(11)
                     val subPackets = generateSequence { readPacket(bits) }
                         .take(numberOfSubpackets)
                         .toList()
-                    Packet.Operator(version, subPackets)
+                    Packet.Operator(version, OperatorLengthType.PACKETS, OperatorType.of(typeId), subPackets)
                 }
             }
         }
@@ -100,6 +143,7 @@ private fun readPacket(bits: Iterator<Bit>): Packet {
 
 private fun Packet.Companion.parse(string: String) =
     string
+//        .asSequence()
         .map { it.digitToInt(16) }
         .flatMap {
             listOf(
@@ -110,6 +154,7 @@ private fun Packet.Companion.parse(string: String) =
             )
         }
         .let { sequence ->
+            println(sequence.joinToString(""))
             val bits = sequence.iterator()
             val packet = readPacket(bits)
             packet
@@ -123,7 +168,10 @@ private fun Packet.sumVersions(): Int =
 
 private fun main() {
     val input = classpathFile("day16/input.txt").readLine()
-    println(Packet.parse(input).sumVersions())
+    val packet = Packet.parse(input)
+    println(packet)
+    println("Part1: ${packet.sumVersions()}")
+    println("Part2: ${packet.value}")
 }
 
 private class Day16Test {
@@ -145,21 +193,38 @@ private class Day16Test {
 
     @ParameterizedTest
     @CsvSource(
+        "C200B40A82, 3",
+        "04005AC33890, 54",
+        "880086C3E88112, 7",
+        "CE00C43D881120, 9",
+        "D8005AC2A8F0, 1",
+        "F600BC2D8F, 0",
+        "9C005AC2F8F0, 0",
+        "9C0141080250320F1802104A08, 1",
+    )
+    fun valueTests(hexCode: String, value: BigInteger) {
+        val packet = Packet.parse(hexCode)
+        println(packet)
+        assertEquals(value, packet.value)
+    }
+
+    @ParameterizedTest
+    @CsvSource(
         "D2FE28, 2021, 21",
         "D14, 10, 11",
         "5224, 20, 16",
     )
-    fun literalValueTests(hexCode: String, bigIntegerValue: BigInteger, bits: Int) {
+    fun literalValueTests(hexCode: String, value: BigInteger, bits: Int) {
         val literalValue = Packet.parse(hexCode) as Packet.LiteralValue
-        assertEquals(bigIntegerValue, literalValue.bigInteger)
+        assertEquals(value, literalValue.value)
         assertEquals(bits, literalValue.size)
     }
 
     @Test
     fun operatorPacket_38006F45291200() {
         val operator = Packet.parse("38006F45291200") as Packet.Operator
-        assertEquals(BigInteger.valueOf(10L), (operator.packets[0] as Packet.LiteralValue).bigInteger)
-        assertEquals(BigInteger.valueOf(20L), (operator.packets[1] as Packet.LiteralValue).bigInteger)
+        assertEquals(BigInteger.valueOf(10L), (operator.packets[0] as Packet.LiteralValue).value)
+        assertEquals(BigInteger.valueOf(20L), (operator.packets[1] as Packet.LiteralValue).value)
     }
 
     @Test
