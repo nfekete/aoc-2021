@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package me.nfekete.adventofcode.y2021.common
 
 import java.io.BufferedReader
@@ -90,3 +92,13 @@ fun <R> produceIf(test: Boolean, producer: () -> R): R? =
         test -> producer()
         else -> null
     }
+
+fun <T> Sequence<T>.takeWhileInclusive(predicate: (T) -> Boolean) = sequence {
+    val it = iterator()
+    var cont = true
+    while (it.hasNext() && cont) {
+        val current = it.next()
+        cont = predicate(current)
+        yield(current)
+    }
+}
