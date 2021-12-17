@@ -102,3 +102,19 @@ fun <T> Sequence<T>.takeWhileInclusive(predicate: (T) -> Boolean) = sequence {
         yield(current)
     }
 }
+
+fun <T> Iterator<T>.chunked(windowSize: Int) = let { other ->
+    object : Iterator<List<T>> {
+        private val buffer = ArrayList<T>(windowSize)
+
+        override fun hasNext(): Boolean = buffer.isNotEmpty() || other.hasNext()
+
+        override fun next(): List<T> {
+            buffer.clear()
+            while (other.hasNext() && buffer.size < windowSize) {
+                buffer.add(other.next())
+            }
+            return buffer.toList()
+        }
+    }.asSequence()
+}
