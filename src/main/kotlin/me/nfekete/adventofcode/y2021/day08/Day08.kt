@@ -1,21 +1,19 @@
 package me.nfekete.adventofcode.y2021.day08
 
 import me.nfekete.adventofcode.y2021.common.classpathFile
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 
-private enum class Segment {
+enum class Segment {
     a, b, c, d, e, f, g
 }
-private typealias Digit = Set<Segment>
+typealias Digit = Set<Segment>
 
 private fun String.toDigit() = map { Segment.valueOf("$it") }.toSet()
-private data class TestCase(
+data class TestCase(
     val allDigits: Set<Digit>,
     val displayedDigigts: List<Digit>
 )
 
-private fun TestCase(line: String) =
+fun TestCase(line: String) =
     line.split(" | ")
         .map { digitSequence ->
             digitSequence.split(" ").map { it.toDigit() }
@@ -37,7 +35,7 @@ private fun TestCase.part1(): Int {
 private fun TestCase.segmentFrequencies() = allDigits.flatten().groupingBy { it }.eachCount()
 private fun Map<Segment, Int>.whereCountIs(count: Int) = filter { it.value == count }
 
-private fun TestCase.part2(): Int {
+fun TestCase.part2(): Int {
     val one = one()
     val seven = seven()
     val four = four()
@@ -85,16 +83,5 @@ private fun main() {
 
     input.sumOf { it.part1() }.let { println("Part1: $it") }
     input.sumOf { it.part2() }.let { println("Part2: $it") }
-
-}
-
-internal class Day08KtTest {
-
-    @Test
-    fun testPart2() {
-        val actual = TestCase("acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf")
-            .part2()
-        Assertions.assertEquals(5353, actual)
-    }
 
 }
