@@ -1,12 +1,10 @@
 package me.nfekete.adventofcode.y2021.day11
 
 import me.nfekete.adventofcode.y2021.common.classpathFile
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 
 private typealias Grid = List<List<Int>>
 
-private data class Coord(val rowIndex: Int, val columnIndex: Int)
+data class Coord(val rowIndex: Int, val columnIndex: Int)
 
 private val Coord.neighbors
     get() = (-1..1).flatMap { deltaRow ->
@@ -28,7 +26,7 @@ private fun Grid.mapIndices(transform: Grid.(Coord) -> Int) = indices.map { rowI
         this.transform(Coord(rowIndex, columnIndex))
     }
 }
-private fun Grid.pretty() = joinToString("\n") { it.joinToString("")}
+fun Grid.pretty() = joinToString("\n") { it.joinToString("")}
 private fun Grid.increment(neighbors: List<Coord>) =
     mapIndices { coord ->
         this[coord] + if (coord in neighbors) 1 else 0
@@ -40,7 +38,7 @@ private fun Grid.zeroOut(coords: Set<Coord>) =
 private fun Grid.elements() = flatMap { row -> row.map { it } }
 private fun Grid.allTheSame() = elements().run { !all { it == first() } }
 
-private fun Grid.part1() = generateSequence(this to emptySet<Coord>()) { (startingGrid, _) ->
+fun Grid.part1() = generateSequence(this to emptySet<Coord>()) { (startingGrid, _) ->
     var grid = startingGrid.map { row -> row.map { element -> element + 1 } }
     val initialFlash = grid.flashingCoords()
     val queue = ArrayDeque(initialFlash)
@@ -72,45 +70,4 @@ private fun main() {
         .count()
         .let { println("Part2: $it") }
 
-}
-
-internal class Day11KtTest {
-    @Test
-    fun test() {
-        val grid = """
-            11111
-            19991
-            19191
-            19991
-            11111
-            """.trimIndent()
-            .lines()
-            .map { line -> line.map { char -> char.digitToInt() } }
-
-        val it = grid.part1().iterator()
-
-        assertEquals("""
-            11111
-            19991
-            19191
-            19991
-            11111
-            """.trimIndent(), it.next().first.pretty())
-
-        assertEquals("""
-            34543
-            40004
-            50005
-            40004
-            34543
-            """.trimIndent(), it.next().first.pretty())
-
-        assertEquals("""
-            45654
-            51115
-            61116
-            51115
-            45654
-            """.trimIndent(), it.next().first.pretty())
-    }
 }
