@@ -4,6 +4,8 @@ package me.nfekete.adventofcode.y2021.common
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import kotlin.math.ceil
+import kotlin.math.floor
 
 fun classpathFile(path: String) =
     BufferedReader(
@@ -41,9 +43,22 @@ fun <A, B, C> Pair<A, B>.map1(fn: (A) -> C): Pair<C, B> = let { (a, b) -> fn(a) 
 fun <A, B, C> Pair<A, B>.map2(fn: (B) -> C): Pair<A, C> = let { (a, b) -> a to fn(b) }
 fun <A, B, R> Pair<A, B>.map(fn: (A, B) -> R): R = let { (a, b) -> fn(a,b) }
 val <A, B> Pair<A, B>.swapped get() = second to first
+val <T: Comparable<T>> Pair<T, T>.inOrder get() = if (first < second) this else swapped
+val Pair<Int, Int>.range get() = first..second
+val Pair<Long, Long>.range get() = first..second
+val Pair<Double, Double>.range get() = first..second
+infix fun <T : Comparable<T>> ClosedFloatingPointRange<T>.intersect(other: ClosedFloatingPointRange<T>) =
+    if (start <= other.endInclusive && other.start <= endInclusive)
+        maxOf(start, other.start)..minOf(endInclusive, other.endInclusive)
+    else
+        null
+val ClosedFloatingPointRange<Double>.enclosedLongRange get() = ceil(start).toLong() .. floor(endInclusive).toLong()
 
 fun Iterable<Long>.product() = fold(1L) { acc, i -> acc * i }
 fun Sequence<Long>.product() = fold(1L) { acc, i -> acc * i }
+
+infix fun IntRange.crossProduct(other: IntRange) =
+    asSequence().flatMap { element -> other.map { otherElement -> element to otherElement } }
 
 fun <R> crossProduct(ra: IntRange, rb: IntRange, fn: (Int, Int) -> R) =
     ra.flatMap { a -> rb.map { b -> fn(a, b) } }
