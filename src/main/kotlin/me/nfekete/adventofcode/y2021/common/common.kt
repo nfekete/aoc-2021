@@ -72,6 +72,12 @@ fun <R> crossProduct(ra: IntRange, rb: IntRange, rc: IntRange, rd: IntRange, fn:
 fun <A, B, R> crossProduct(sa: Sequence<A>, sb: Sequence<B>, fn: (A, B) -> R) =
     sa.flatMap { a -> sb.map { b -> fn(a, b) } }
 
+infix fun <A, B> Iterable<A>.crossProduct(other: Iterable<B>) =
+    flatMap { a -> other.map { b -> a to b } }
+
+infix fun <A, B> Sequence<A>.crossProduct(other: Sequence<B>) =
+    flatMap { a -> other.map { b -> a to b } }
+
 fun <A, B, C, R> crossProduct(sa: Sequence<A>, sb: Sequence<B>, sc: Sequence<C>, fn: (A, B, C) -> R) =
     sa.flatMap { a -> sb.flatMap { b -> sc.map { c -> fn(a, b, c) } } }
 
