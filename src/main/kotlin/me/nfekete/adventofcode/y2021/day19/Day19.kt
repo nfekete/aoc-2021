@@ -1,6 +1,7 @@
 package me.nfekete.adventofcode.y2021.day19
 
 import me.nfekete.adventofcode.y2021.common.*
+import kotlin.math.abs
 
 private data class Coord(val x: Int, val y: Int, val z: Int) : Comparable<Coord> {
     override fun compareTo(other: Coord): Int =
@@ -20,6 +21,7 @@ private data class Coord(val x: Int, val y: Int, val z: Int) : Comparable<Coord>
     operator fun plus(other: Coord) = Coord(x + other.x, y + other.y, z + other.z)
     operator fun minus(other: Coord) = Coord(x - other.x, y - other.y, z - other.z)
     operator fun unaryMinus() = Coord(-x, -y, -z)
+    val manhattan get() = abs(x) + abs(y) + abs(z)
 }
 private typealias Matrix3x3 = List<List<Int>>
 
@@ -72,8 +74,8 @@ private interface Scanner {
 
     val id: String
     val beacons: Set<Coord>
-    fun rotate(rotation: Matrix3x3): Scanner = RotatedScanner(this, rotation)
-    fun shift(delta: Coord): Scanner = ShiftedScanner(this, delta)
+    fun rotate(rotation: Matrix3x3) = RotatedScanner(this, rotation)
+    fun shift(delta: Coord): ShiftedScanner = ShiftedScanner(this, delta)
     fun allRotations() = Rotations.all.map { rotate(it) }
     fun merged(other: Scanner) = DefaultScanner("$id+${other.id}", (beacons union other.beacons).toSet())
 }
@@ -97,7 +99,7 @@ private class RotatedScanner(val delegate: Scanner, val rotation: Matrix3x3) : S
 
 private class ShiftedScanner(val delegate: Scanner, val delta: Coord) : Scanner {
     override val id: String = delegate.id
-    override val beacons: Set<Coord> = delegate.beacons.map { it + delta }.toSet()
+    override val beacons: Set<Coord> get() = delegate.beacons.map { it + delta }.toSet()
 
     override fun toString() = id
     override fun equals(other: Any?) = equals(this, other, Scanner::id)
@@ -112,33 +114,44 @@ private fun Scanner.Companion.parse(lines: List<String>): Scanner {
         .let { DefaultScanner(id, it.toSet()) }
 }
 
-private fun Scanner.overlaps(other: Scanner): Scanner? = other.allRotations()
-    .firstNotNullOfOrNull { rotatedOther ->
-        beacons.flatMap { left ->
-            rotatedOther.beacons.map { right ->
-                left - right to rotatedOther
-            }
-        }.groupingBy { it }
-            .eachCount()
-            .map { it }
-            .filter { it.value >= 12 }
-            .maxByOrNull { it.value }
-    }
-    ?.let { match -> match.key.second.shift(match.key.first) }
+private fun Scanner.overlaps(other: Scanner) =
+    other.allRotations()
+        .firstNotNullOfOrNull { rotatedOther ->
+            beacons.flatMap { left ->
+                rotatedOther.beacons.map { right ->
+                    left - right to rotatedOther
+                }
+            }.groupingBy { it }
+                .eachCount()
+                .map { it }
+                .filter { it.value >= 12 }
+                .maxByOrNull { it.value }
+        }
+        ?.let { match -> match.key.second.shift(match.key.first) }
 
-private fun List<Scanner>.part1() {
-    val ret = generateSequence(first() to drop(1)) { (merged, unmerged) ->
-        findOverlappingScanner(merged, unmerged)
-            ?.let { right -> merged.merged(right) to unmerged - right }
-    }.last()
-    println(ret)
-    println(ret.first.beacons.size)
-}
-
-private fun findOverlappingScanner(left: Scanner, scanners: List<Scanner>, debug: Boolean = false): Scanner? =
+private fun findOverlappingScanner(left: Scanner, scanners: List<Scanner>) =
     scanners.asSequence()
         .mapNotNull { right -> left.overlaps(right) }
         .firstOrNull()
+
+private fun List<Scanner>.solve() {
+    var merged = first()
+    val unmerged = drop(1).toMutableList()
+    val shifts = mutableListOf(Coord(0, 0, 0))
+    while (unmerged.isNotEmpty()) {
+        val shiftedScanner = findOverlappingScanner(merged, unmerged)!!
+        merged = merged.merged(shiftedScanner)
+        unmerged -= shiftedScanner
+        shifts += shiftedScanner.delta
+    }
+    merged.beacons.size
+        .let { println("Part1: $it") }
+
+    shifts.indices
+        .flatMap { i -> (i + 1..shifts.indices.last).map { j -> (shifts[i] - shifts[j]).manhattan } }
+        .maxOf { it }
+        .let { println("Part2: $it") }
+}
 
 private fun main() {
     val scanners = classpathFile("day19/input.txt")
@@ -147,7 +160,5 @@ private fun main() {
         .map { Scanner.parse(it) }
         .toList()
 
-    scanners.part1()
+    scanners.solve()
 }
-
-
