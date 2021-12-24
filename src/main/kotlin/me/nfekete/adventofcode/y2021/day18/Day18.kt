@@ -1,6 +1,7 @@
 package me.nfekete.adventofcode.y2021.day18
 
 import me.nfekete.adventofcode.y2021.common.classpathFile
+import me.nfekete.adventofcode.y2021.common.crossProduct
 import me.nfekete.adventofcode.y2021.common.produceIf
 
 sealed interface Number {
@@ -169,4 +170,10 @@ private fun main() {
         .map { Number.parse(it) }
 
     input.reduce { acc, number -> acc + number }.let { println("Part1: ${it.magnitude}") }
+
+    (input crossProduct input)
+        .filter { (left, right) -> left !== right }
+        .map { (left, right) -> left + right }
+        .maxOf { it.magnitude }
+        .let { println("Part1: $it") }
 }
