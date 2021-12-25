@@ -18,14 +18,14 @@ fun String.translate(vararg chars: Pair<Char, Char>) = chars.toMap().let { map -
     this.map { map.getOrDefault(it, it) }.joinToString("")
 }
 
-fun Sequence<String>.chunkBy(predicate: (String) -> Boolean) = sequence {
-    val currentChunk = mutableListOf<String>()
-    for (line in this@chunkBy) {
-        if (predicate(line)) {
+fun <E> Sequence<E>.chunkBy(predicate: (E) -> Boolean) = sequence {
+    val currentChunk = mutableListOf<E>()
+    for (element in this@chunkBy) {
+        if (predicate(element)) {
             yield(currentChunk.toList())
             currentChunk.clear()
         } else {
-            currentChunk.add(line)
+            currentChunk.add(element)
         }
     }
     yield(currentChunk.toList())

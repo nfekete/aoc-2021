@@ -36,30 +36,55 @@ fun Instruction.Companion.parse(string: String) =
             }
         }
 
-class State(val input: Iterator<Char>) {
-    val variables = Variable.values().associateWith { 0 }.toMutableMap()
-}
+data class State(
+    val input: String,
+    val vars: Map<Variable, Int> = Variable.values().associateWith { 0 }
+)
 
-class Part1 {
-    fun execute(input: String, program: List<Instruction>) = program.fold(State(input.iterator())) { acc, instruction ->
-        instruction.execute(acc)
-    }
+object Interpreter {
+    fun execute(initialState: State, program: List<Instruction>) =
+        program.fold(initialState) { acc, instruction -> instruction.execute(acc) }
 
     fun Instruction.execute(state: State) =
         when (this) {
-            is Inp -> state.apply { variables[target] = input.next().digitToInt() }
-            is Add -> state.apply { variables[target] = variables[target]!! + argument.resolve(state) }
-            is Mul -> state.apply { variables[target] = variables[target]!! * argument.resolve(state) }
-            is Div -> state.apply { variables[target] = variables[target]!! / argument.resolve(state) }
-            is Mod -> state.apply { variables[target] = variables[target]!! % argument.resolve(state) }
-            is Eql -> state.apply { variables[target] = if (variables[target]!! == argument.resolve(state)) 1 else 0 }
+            is Inp -> with(state) { copy(vars = vars + (target to input.first().digitToInt())) }
+            is Add -> with(state) { copy(vars = vars + (target to vars[target]!! + argument.resolve(state))) }
+            is Mul -> with(state) { copy(vars = vars + (target to vars[target]!! * argument.resolve(state))) }
+            is Div -> with(state) { copy(vars = vars + (target to vars[target]!! / argument.resolve(state))) }
+            is Mod -> with(state) { copy(vars = vars + (target to vars[target]!! % argument.resolve(state))) }
+            is Eql -> with(state) { copy(vars = vars + (target to if (vars[target]!! == argument.resolve(state)) 1 else 0)) }
         }
 
     fun Argument.resolve(state: State) =
         when (this) {
             is Number -> value
-            Variable.w, Variable.x, Variable.y, Variable.z -> state.variables[this]!!
+            Variable.w, Variable.x, Variable.y, Variable.z -> state.vars[this]!!
         }
+}
+
+fun List<Instruction>.part1(): String? {
+    val blockSize = 18
+    fun nextBlock(string: String, initialState: State, instructions: List<Instruction>): String? {
+        if (string.length === 4) {
+            println(string)
+        }
+        val currentBlock = instructions.take(blockSize)
+        val remaining = instructions.drop(blockSize)
+        for (char in '9' downTo '1') {
+            val currentString = "$string$char"
+            val state = Interpreter.execute(initialState.copy(input = "$char"), currentBlock)
+            if (remaining.isEmpty()) {
+                if (state.vars[Variable.z] == 1) {
+                    return currentString
+                }
+            } else {
+                nextBlock(currentString, state, remaining)
+                    ?.let { return it }
+            }
+        }
+        return null
+    }
+    return nextBlock("", State(""), this)
 }
 
 private fun main() {
@@ -67,10 +92,6 @@ private fun main() {
         .readLines()
         .map { Instruction.parse(it) }
 
-    (99_999_999_999_999 downTo 10_000_000_000)
-        .onEach { if (it % 1_000_000_000 == 0L) println("progress: $it") }
-        .map { it.toString() }
-        .find { Part1().execute(it, instructions).variables[Variable.z] == 1 }
-        .let { println(it) }
+    instructions.part1().let { println("Part1: $it") }
 
 }
