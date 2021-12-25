@@ -1,6 +1,7 @@
 package me.nfekete.adventofcode.y2021.day24
 
 import me.nfekete.adventofcode.y2021.common.classpathFile
+import java.util.*
 
 sealed interface Argument
 enum class Variable : Argument { w, x, y, z }
@@ -36,10 +37,14 @@ fun Instruction.Companion.parse(string: String) =
             }
         }
 
-data class State(
-    val input: String,
-    val vars: Map<Variable, Int> = Variable.values().associateWith { 0 }
-)
+class State(
+    var input: String,
+    val vars: MutableMap<Variable, Int> = EnumMap<Variable, Int>(Variable::class.java).apply {
+        Variable.values().forEach { put(it, 0) }
+    }
+) {
+    fun copy(input: String = this.input) = State(input = input, vars = EnumMap(vars))
+}
 
 object Interpreter {
     fun execute(initialState: State, program: List<Instruction>) =
@@ -47,12 +52,12 @@ object Interpreter {
 
     fun Instruction.execute(state: State) =
         when (this) {
-            is Inp -> with(state) { copy(vars = vars + (target to input.first().digitToInt())) }
-            is Add -> with(state) { copy(vars = vars + (target to vars[target]!! + argument.resolve(state))) }
-            is Mul -> with(state) { copy(vars = vars + (target to vars[target]!! * argument.resolve(state))) }
-            is Div -> with(state) { copy(vars = vars + (target to vars[target]!! / argument.resolve(state))) }
-            is Mod -> with(state) { copy(vars = vars + (target to vars[target]!! % argument.resolve(state))) }
-            is Eql -> with(state) { copy(vars = vars + (target to if (vars[target]!! == argument.resolve(state)) 1 else 0)) }
+            is Inp -> state.apply { vars[target] = input.first().digitToInt(); input = input.drop(1) }
+            is Add -> state.apply { vars[target] = vars[target]!! + argument.resolve(state) }
+            is Mul -> state.apply { vars[target] = vars[target]!! * argument.resolve(state) }
+            is Div -> state.apply { vars[target] = vars[target]!! / argument.resolve(state) }
+            is Mod -> state.apply { vars[target] = vars[target]!! % argument.resolve(state) }
+            is Eql -> state.apply { vars[target] = if (vars[target]!! == argument.resolve(state)) 1 else 0 }
         }
 
     fun Argument.resolve(state: State) =
@@ -65,7 +70,7 @@ object Interpreter {
 fun List<Instruction>.part1(): String? {
     val blockSize = 18
     fun nextBlock(string: String, initialState: State, instructions: List<Instruction>): String? {
-        if (string.length === 4) {
+        if (string.length == 7) {
             println(string)
         }
         val currentBlock = instructions.take(blockSize)
@@ -74,7 +79,7 @@ fun List<Instruction>.part1(): String? {
             val currentString = "$string$char"
             val state = Interpreter.execute(initialState.copy(input = "$char"), currentBlock)
             if (remaining.isEmpty()) {
-                if (state.vars[Variable.z] == 1) {
+                if (state.vars[Variable.z] == 0) {
                     return currentString
                 }
             } else {
