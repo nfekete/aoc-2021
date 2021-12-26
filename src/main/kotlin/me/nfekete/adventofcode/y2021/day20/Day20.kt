@@ -46,9 +46,6 @@ data class Image(val bitmap: Array<ByteArray>, val backgroundOutside: Byte = 0) 
     private fun List<Byte>.toBinary() =
         fold(0) { acc, byte -> acc shl 1 or byte.toInt() }
 
-    fun prettyPrint() =
-        bitmap.joinToString("\n") { row -> row.joinToString("") { if (it == 1.toByte()) "#" else "." } }
-
     companion object
 }
 
@@ -56,6 +53,13 @@ fun Image.Companion.parse(lines: List<String>) =
     lines.map { line ->
         line.map<Byte> { char -> if (char == '#') 1 else 0 }.toByteArray()
     }.toTypedArray().let { Image(it) }
+
+private fun Image.enhance(translationTable: ByteArray, times: Int) =
+    generateSequence(this) { it.translate(translationTable) }
+        .take(times + 1)
+        .last()
+
+private fun Image.countLitPixels() = bitmap.sumOf { row -> row.count { it == 1.toByte() } }
 
 fun main() {
     val (translationTable, image) = classpathFile("day20/input.txt")
@@ -66,9 +70,11 @@ fun main() {
         .map1 { lines -> parseTranslationTable(lines) }
         .map2 { lines -> Image.parse(lines) }
 
-    image
-        .translate(translationTable)
-        .translate(translationTable)
-        .bitmap.sumOf { row -> row.count { it == 1.toByte() } }
+    image.enhance(translationTable, 2)
+        .countLitPixels()
         .let { println("Part1: $it") }
+    image.enhance(translationTable, 50)
+        .countLitPixels()
+        .let { println("Part2: $it") }
 }
+
