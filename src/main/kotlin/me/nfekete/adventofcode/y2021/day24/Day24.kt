@@ -1,31 +1,30 @@
 package me.nfekete.adventofcode.y2021.day24
 
 import me.nfekete.adventofcode.y2021.common.classpathFile
-import java.util.*
 
-sealed interface Argument
-enum class Variable : Argument { w, x, y, z }
-data class Number(val value: Int) : Argument
+private sealed interface Argument
+private enum class Variable : Argument { w, x, y, z }
+private data class Number(val value: Long) : Argument
 
-sealed interface Instruction {
+private sealed interface Instruction {
     companion object
 }
 
-data class Inp(val target: Variable) : Instruction
-data class Add(val target: Variable, val argument: Argument) : Instruction
-data class Mul(val target: Variable, val argument: Argument) : Instruction
-data class Div(val target: Variable, val argument: Argument) : Instruction
-data class Mod(val target: Variable, val argument: Argument) : Instruction
-data class Eql(val target: Variable, val argument: Argument) : Instruction
+private data class Inp(val target: Variable) : Instruction
+private data class Add(val target: Variable, val argument: Argument) : Instruction
+private data class Mul(val target: Variable, val argument: Argument) : Instruction
+private data class Div(val target: Variable, val argument: Argument) : Instruction
+private data class Mod(val target: Variable, val argument: Argument) : Instruction
+private data class Eql(val target: Variable, val argument: Argument) : Instruction
 
-val instructionRegex = Regex("([a-z]{3}) ([wxyz]) ?(?:(-?\\d+)|([wxyz]))?")
-fun Instruction.Companion.parse(string: String) =
+private val instructionRegex = Regex("([a-z]{3}) ([wxyz]) ?(?:(-?\\d+)|([wxyz]))?")
+private fun Instruction.Companion.parse(string: String) =
     instructionRegex.matchEntire(string)!!
         .destructured
-        .let { (instr, target, number, argRef) ->
-            val argument = number.takeIf { it.isNotEmpty() }?.let { Number(it.toInt()) }
+        .let { (instr, targetName, number, argRef) ->
+            val argument = number.takeIf { it.isNotEmpty() }?.let { Number(it.toLong()) }
                 ?: argRef.takeIf { it.isNotEmpty() }?.let { Variable.valueOf(it) }
-            val target = Variable.valueOf(target)
+            val target = Variable.valueOf(targetName)
             when (instr) {
                 "inp" -> Inp(target)
                 "add" -> Add(target, argument!!)
@@ -37,22 +36,21 @@ fun Instruction.Companion.parse(string: String) =
             }
         }
 
-class State(
+/*
+private data class State(
     var input: String,
-    val vars: MutableMap<Variable, Int> = EnumMap<Variable, Int>(Variable::class.java).apply {
-        Variable.values().forEach { put(it, 0) }
-    }
+    val vars: MutableMap<Variable, Long> = Variable.values().associateWithTo(EnumMap(Variable::class.java)) { 0 }
 ) {
     fun copy(input: String = this.input) = State(input = input, vars = EnumMap(vars))
 }
 
-object Interpreter {
+private object Interpreter {
     fun execute(initialState: State, program: List<Instruction>) =
         program.fold(initialState) { acc, instruction -> instruction.execute(acc) }
 
     fun Instruction.execute(state: State) =
         when (this) {
-            is Inp -> state.apply { vars[target] = input.first().digitToInt(); input = input.drop(1) }
+            is Inp -> state.apply { vars[target] = input.first().digitToInt().toLong(); input = input.drop(1) }
             is Add -> state.apply { vars[target] = vars[target]!! + argument.resolve(state) }
             is Mul -> state.apply { vars[target] = vars[target]!! * argument.resolve(state) }
             is Div -> state.apply { vars[target] = vars[target]!! / argument.resolve(state) }
@@ -66,30 +64,55 @@ object Interpreter {
             Variable.w, Variable.x, Variable.y, Variable.z -> state.vars[this]!!
         }
 }
+ */
 
-fun List<Instruction>.part1(): String? {
-    val blockSize = 18
-    fun nextBlock(string: String, initialState: State, instructions: List<Instruction>): String? {
-        if (string.length == 7) {
-            println(string)
-        }
-        val currentBlock = instructions.take(blockSize)
-        val remaining = instructions.drop(blockSize)
-        for (char in '9' downTo '1') {
-            val currentString = "$string$char"
-            val state = Interpreter.execute(initialState.copy(input = "$char"), currentBlock)
-            if (remaining.isEmpty()) {
-                if (state.vars[Variable.z] == 0) {
-                    return currentString
+private data class FunctionParameters(
+    val dz: Long,
+    val d1: Long,
+    val d2: Long,
+)
+
+private fun List<Instruction>.extractParams() =
+    chunked(18).map { chunk ->
+        val dz = ((chunk[4] as Div).argument as Number).value
+        val d1 = ((chunk[5] as Add).argument as Number).value
+        val d2 = ((chunk[15] as Add).argument as Number).value
+        FunctionParameters(dz, d1, d2)
+    }
+
+private fun calcZ(w: Int, z: Long, dz: Long, d1: Long, d2: Long) =
+    if (z % 26L + d1 != w.toLong())
+        26 * (z / dz) + w + d2
+    else
+        (z/dz)
+
+private fun List<Instruction>.findValidModelNumber(ascending: Boolean = false): String? {
+    val stepParameters = extractParams()
+    val digitRange = if (ascending) 1..9 else 9 downTo 1
+
+    fun recurse(step: Int, z: Long): String? {
+        for (digit in digitRange) {
+            val parameters = stepParameters[step]
+            if (parameters.dz == 26L && (z % 26 + parameters.d1) != digit.toLong())
+                continue
+            val newZ = calcZ(digit, z, parameters.dz, parameters.d1, parameters.d2)
+            if (step == 13) {
+                if (newZ == 0L) {
+                    return digit.digitToChar().toString()
+                } else {
+                    continue
                 }
             } else {
-                nextBlock(currentString, state, remaining)
-                    ?.let { return it }
+                val result = recurse(step + 1, newZ)
+                if (result != null) {
+                    return "" + digit.digitToChar() + result
+                }
             }
         }
         return null
     }
-    return nextBlock("", State(""), this)
+
+    return recurse(0, 0)
 }
 
 private fun main() {
@@ -97,6 +120,6 @@ private fun main() {
         .readLines()
         .map { Instruction.parse(it) }
 
-    instructions.part1().let { println("Part1: $it") }
-
+    instructions.findValidModelNumber(false).let { println("Part1: $it") }
+    instructions.findValidModelNumber(true).let { println("Part2: $it") }
 }
