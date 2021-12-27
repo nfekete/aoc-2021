@@ -5,9 +5,9 @@ import me.nfekete.adventofcode.y2021.common.intersect
 import me.nfekete.adventofcode.y2021.day22.Signal.OFF
 import me.nfekete.adventofcode.y2021.day22.Signal.ON
 
-val IntRange.length get() = if (isEmpty()) 0 else last - first + 1
+private val IntRange.length get() = if (isEmpty()) 0 else last - first + 1
 
-data class IntRange3D(val xRange: IntRange, val yRange: IntRange, val zRange: IntRange) {
+private data class IntRange3D(val xRange: IntRange, val yRange: IntRange, val zRange: IntRange) {
     fun isEmpty() = xRange.isEmpty() || yRange.isEmpty() || zRange.isEmpty()
     fun volume() = xRange.length.toLong() * yRange.length * zRange.length
     infix fun intersect(other: IntRange3D) =
@@ -18,8 +18,8 @@ data class IntRange3D(val xRange: IntRange, val yRange: IntRange, val zRange: In
         )
 }
 
-enum class Signal { ON, OFF }
-data class Step(val signal: Signal, val range3D: IntRange3D) {
+private enum class Signal { ON, OFF }
+private data class Step(val signal: Signal, val range3D: IntRange3D) {
     companion object
 
     fun apply(steps: List<Step>) =
@@ -56,10 +56,10 @@ data class Step(val signal: Signal, val range3D: IntRange3D) {
         }
 }
 
-fun Iterable<Step>.volume() = sumOf { if (it.signal == ON) it.range3D.volume() else -it.range3D.volume() }
+private fun Iterable<Step>.volume() = sumOf { if (it.signal == ON) it.range3D.volume() else -it.range3D.volume() }
 
-val stepRegex = Regex("(on|off) x=(-?\\d+)..(-?\\d+),y=(-?\\d+)..(-?\\d+),z=(-?\\d+)..(-?\\d+)")
-fun Step.Companion.parse(string: String) =
+private val stepRegex = Regex("(on|off) x=(-?\\d+)..(-?\\d+),y=(-?\\d+)..(-?\\d+),z=(-?\\d+)..(-?\\d+)")
+private fun Step.Companion.parse(string: String) =
     stepRegex.matchEntire(string)!!.destructured.let { (command, x1, x2, y1, y2, z1, z2) ->
         Step(
             Signal.valueOf(command.uppercase()),
@@ -67,7 +67,7 @@ fun Step.Companion.parse(string: String) =
         )
     }
 
-fun main() {
+private fun main() {
     val steps = classpathFile("day22/input.txt")
         .readLines()
         .map { Step.parse(it) }

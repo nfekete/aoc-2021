@@ -5,19 +5,19 @@ import me.nfekete.adventofcode.y2021.common.classpathFile
 import me.nfekete.adventofcode.y2021.common.map1
 import me.nfekete.adventofcode.y2021.common.map2
 
-fun parseTranslationTable(lines: List<String>) = lines.joinToString("")
+private fun parseTranslationTable(lines: List<String>) = lines.joinToString("")
     .map<Byte> { if (it == '#') 1 else 0 }.toByteArray()
 
-data class Coord(val x: Int, val y: Int)
+private data class Coord(val x: Int, val y: Int)
 
-fun Coord.neighborhood() =
+private fun Coord.neighborhood() =
     (-1..1).flatMap { dy ->
         (-1..1).map { dx -> Coord(x + dx, y + dy) }
     }
 
-val IntRange.bidiGrowByOne get() = first - 1..last + 1
+private val IntRange.bidiGrowByOne get() = first - 1..last + 1
 
-data class Image(val bitmap: Array<ByteArray>, val backgroundOutside: Byte = 0) {
+private data class Image(val bitmap: Array<ByteArray>, val backgroundOutside: Byte = 0) {
     val xRange = bitmap.first().indices
     val yRange = bitmap.indices
     operator fun get(coord: Coord) = with(coord) {
@@ -49,7 +49,7 @@ data class Image(val bitmap: Array<ByteArray>, val backgroundOutside: Byte = 0) 
     companion object
 }
 
-fun Image.Companion.parse(lines: List<String>) =
+private fun Image.Companion.parse(lines: List<String>) =
     lines.map { line ->
         line.map<Byte> { char -> if (char == '#') 1 else 0 }.toByteArray()
     }.toTypedArray().let { Image(it) }
@@ -61,7 +61,7 @@ private fun Image.enhance(translationTable: ByteArray, times: Int) =
 
 private fun Image.countLitPixels() = bitmap.sumOf { row -> row.count { it == 1.toByte() } }
 
-fun main() {
+private fun main() {
     val (translationTable, image) = classpathFile("day20/input.txt")
         .lineSequence()
         .chunkBy { it.isEmpty() }
