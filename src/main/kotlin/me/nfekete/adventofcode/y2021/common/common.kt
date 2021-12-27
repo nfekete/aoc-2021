@@ -41,9 +41,9 @@ fun String.splitByDelimiter(delimiter: String) =
 
 fun <A, B, C> Pair<A, B>.map1(fn: (A) -> C): Pair<C, B> = let { (a, b) -> fn(a) to b }
 fun <A, B, C> Pair<A, B>.map2(fn: (B) -> C): Pair<A, C> = let { (a, b) -> a to fn(b) }
-fun <A, B, R> Pair<A, B>.map(fn: (A, B) -> R): R = let { (a, b) -> fn(a,b) }
+fun <A, B, R> Pair<A, B>.map(fn: (A, B) -> R): R = let { (a, b) -> fn(a, b) }
 val <A, B> Pair<A, B>.swapped get() = second to first
-val <T: Comparable<T>> Pair<T, T>.inOrder get() = if (first < second) this else swapped
+val <T : Comparable<T>> Pair<T, T>.inOrder get() = if (first < second) this else swapped
 val Pair<Int, Int>.range get() = first..second
 val Pair<Long, Long>.range get() = first..second
 val Pair<Double, Double>.range get() = first..second
@@ -52,7 +52,14 @@ infix fun <T : Comparable<T>> ClosedFloatingPointRange<T>.intersect(other: Close
         maxOf(start, other.start)..minOf(endInclusive, other.endInclusive)
     else
         null
-val ClosedFloatingPointRange<Double>.enclosedLongRange get() = ceil(start).toLong() .. floor(endInclusive).toLong()
+
+val ClosedFloatingPointRange<Double>.enclosedLongRange get() = ceil(start).toLong()..floor(endInclusive).toLong()
+
+infix fun IntRange.intersect(other: IntRange) =
+    if (first <= other.last && other.first <= last)
+        maxOf(first, other.first)..minOf(last, other.last)
+    else
+        IntRange.EMPTY
 
 fun Iterable<Long>.product() = fold(1L) { acc, i -> acc * i }
 fun Sequence<Long>.product() = fold(1L) { acc, i -> acc * i }
