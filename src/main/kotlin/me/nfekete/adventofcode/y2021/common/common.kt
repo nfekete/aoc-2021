@@ -44,9 +44,9 @@ fun <A, B, C> Pair<A, B>.map2(fn: (B) -> C): Pair<A, C> = let { (a, b) -> a to f
 fun <A, B, R> Pair<A, B>.map(fn: (A, B) -> R): R = let { (a, b) -> fn(a, b) }
 val <A, B> Pair<A, B>.swapped get() = second to first
 val <T : Comparable<T>> Pair<T, T>.inOrder get() = if (first < second) this else swapped
-val Pair<Int, Int>.range get() = first..second
-val Pair<Long, Long>.range get() = first..second
-val Pair<Double, Double>.range get() = first..second
+val Pair<Int, Int>.range get() = if (first <= second) first..second else first downTo second
+val Pair<Long, Long>.range get() = if (first <= second) first..second else first downTo second
+val Pair<Double, Double>.range get() = if (first <= second) first..second else second..first
 infix fun <T : Comparable<T>> ClosedFloatingPointRange<T>.intersect(other: ClosedFloatingPointRange<T>) =
     if (start <= other.endInclusive && other.start <= endInclusive)
         maxOf(start, other.start)..minOf(endInclusive, other.endInclusive)
