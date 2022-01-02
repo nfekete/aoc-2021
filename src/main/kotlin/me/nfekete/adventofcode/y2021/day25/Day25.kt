@@ -5,16 +5,16 @@ import me.nfekete.adventofcode.y2021.common.takeWhileInclusive
 import me.nfekete.adventofcode.y2021.day25.Direction.*
 import me.nfekete.adventofcode.y2021.day25.GridElement.*
 
-data class Coord(val x: Int, val y: Int)
-enum class Direction { East, South }
-enum class GridElement { EastFacingCucumber, SouthFacingCucumber, Empty }
+private data class Coord(val x: Int, val y: Int)
+private enum class Direction { East, South }
+private enum class GridElement { EastFacingCucumber, SouthFacingCucumber, Empty }
 
-fun GridElement.matches(direction: Direction) = when (direction) {
+private fun GridElement.matches(direction: Direction) = when (direction) {
     East -> this == EastFacingCucumber
     South -> this == SouthFacingCucumber
 }
 
-data class CucumberMap(val grid: List<List<GridElement>>) {
+private data class CucumberMap(val grid: List<List<GridElement>>) {
     companion object {
         fun parse(lines: List<String>) =
             lines.map { line ->
@@ -64,7 +64,7 @@ data class CucumberMap(val grid: List<List<GridElement>>) {
     fun advance() = move(East).move(South)
 }
 
-fun main() {
+private fun main() {
     val input = classpathFile("day25/input.txt")
         .readLines()
         .let { CucumberMap.parse(it) }
