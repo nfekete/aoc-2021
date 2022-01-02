@@ -76,15 +76,12 @@ private class AmphipodOrganizer {
                             BurrowStateWithCost(teleport(amphipod, path.last()), path.size * amphipod.type.energyUse)
                         }
                 } else {
-                    val map = hallwayStopCoordinatesX
+                    hallwayStopCoordinatesX
                         .map { x -> amphipod.pathToHallway(x) }
-                    val filter = map
                         .filter { path -> path.isClear() }
-                    val map1 = filter
                         .map { path ->
                             BurrowStateWithCost(teleport(amphipod, path.last()), path.size * amphipod.type.energyUse)
                         }
-                    map1
                 }
             }
 
