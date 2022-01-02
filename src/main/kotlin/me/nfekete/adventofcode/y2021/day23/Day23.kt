@@ -6,7 +6,6 @@ import me.nfekete.adventofcode.y2021.common.range
 import java.util.PriorityQueue
 
 const val hallwayY = 1
-val roomsRangeY = hallwayY + 1..hallwayY + 2
 val hallwayRangeX = 1..11
 val hallwayStopCoordinatesX = hallwayRangeX - AmphipodType.values().map { it.roomCoordinateX }.toSet()
 
@@ -18,14 +17,16 @@ val AmphipodType.roomCoordinateX get() = 3 + ordinal * 2
 
 data class Coord(val x: Int, val y: Int)
 data class Amphipod(val type: AmphipodType, val location: Coord)
-data class BurrowState(val amphipods: List<Amphipod>) {
+data class BurrowState(val amphipods: List<Amphipod>, val roomsRangeY: IntRange) {
     companion object {
         fun parse(lines: List<String>) =
             lines.flatMapIndexed { y, line ->
                 line.mapIndexedNotNull { x, char ->
                     char.takeIf { it in 'A'..'D' }?.let { Amphipod(enumValueOf("$it"), Coord(x, y)) }
                 }
-            }.let { BurrowState(it) }
+            }.let { amphipods ->
+                BurrowState(amphipods, amphipods.minOf { it.location.y }..amphipods.maxOf { it.location.y })
+            }
     }
 
     fun Coord.isTargetRoomFor(amphipodType: AmphipodType) = x == amphipodType.roomCoordinateX
@@ -62,7 +63,7 @@ class AmphipodOrganizer {
     data class BurrowStateWithCost(val state: BurrowState, val cost: Int)
 
     fun BurrowState.expand() =
-        amphipods //.filter { !it.isInFinalPosition() }
+        amphipods
             .flatMap { amphipod ->
                 if (amphipod.isInFinalPosition())
                     emptyList()
@@ -112,10 +113,14 @@ fun main() {
         "sample",
         "input",
     ).forEach { name ->
-        val input = classpathFile("day23/$name.txt")
-            .readLines()
-            .let { BurrowState.parse(it) }
+        val part1 = classpathFile("day23/$name.txt").readLines()
+        val additionalLines = """
+            |  #D#C#B#A#
+            |  #D#B#A#C#
+        """.trimMargin("|")
+        val part2 = part1.take(3) + additionalLines.lines() + part1.drop(3)
 
-        AmphipodOrganizer().organize(input).let { println("Part1: $it") }
+        AmphipodOrganizer().organize(BurrowState.parse(part1)).let { println("$name: Part1: $it") }
+        AmphipodOrganizer().organize(BurrowState.parse(part2)).let { println("$name: Part2: $it") }
     }
 }
