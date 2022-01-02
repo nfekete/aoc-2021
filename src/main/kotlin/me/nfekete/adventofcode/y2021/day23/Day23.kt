@@ -5,19 +5,19 @@ import me.nfekete.adventofcode.y2021.common.produceIf
 import me.nfekete.adventofcode.y2021.common.range
 import java.util.PriorityQueue
 
-const val hallwayY = 1
-val hallwayRangeX = 1..11
-val hallwayStopCoordinatesX = hallwayRangeX - AmphipodType.values().map { it.roomCoordinateX }.toSet()
+private const val hallwayY = 1
+private val hallwayRangeX = 1..11
+private val hallwayStopCoordinatesX = hallwayRangeX - AmphipodType.values().map { it.roomCoordinateX }.toSet()
 
-enum class AmphipodType(val energyUse: Int) {
+private enum class AmphipodType(val energyUse: Int) {
     A(1), B(10), C(100), D(1000)
 }
 
-val AmphipodType.roomCoordinateX get() = 3 + ordinal * 2
+private val AmphipodType.roomCoordinateX get() = 3 + ordinal * 2
 
-data class Coord(val x: Int, val y: Int)
-data class Amphipod(val type: AmphipodType, val location: Coord)
-data class BurrowState(val amphipods: List<Amphipod>, val roomsRangeY: IntRange) {
+private data class Coord(val x: Int, val y: Int)
+private data class Amphipod(val type: AmphipodType, val location: Coord)
+private data class BurrowState(val amphipods: List<Amphipod>, val roomsRangeY: IntRange) {
     companion object {
         fun parse(lines: List<String>) =
             lines.flatMapIndexed { y, line ->
@@ -59,7 +59,7 @@ data class BurrowState(val amphipods: List<Amphipod>, val roomsRangeY: IntRange)
     fun allInFinalPosition() = amphipods.all { it.isInFinalPosition() }
 }
 
-class AmphipodOrganizer {
+private class AmphipodOrganizer {
     data class BurrowStateWithCost(val state: BurrowState, val cost: Int)
 
     fun BurrowState.expand() =
@@ -108,7 +108,7 @@ class AmphipodOrganizer {
     }
 }
 
-fun main() {
+private fun main() {
     listOf(
         "sample",
         "input",
